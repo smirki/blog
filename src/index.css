@@ -1,0 +1,347 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap');
+@import 'tailwindcss';
+
+
+/* Variables */
+:root {
+  --neon-cyan: #0ff;
+  --neon-pink: #f0f;
+  --neon-purple: #8a2be2;
+  --bg-dark: #0a0a1a;
+  --bg-light: #f0f4ff;
+}
+
+body {
+  font-family: 'Space Grotesk', sans-serif;
+  background: radial-gradient(circle at center, #0a0a1a 0%, #000 100%);
+  color: #fff;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* The "cyber-border" effect */
+.cyber-border {
+  position: relative;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: linear-gradient(145deg, rgba(16,16,32,0.8), rgba(8,8,16,0.9));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.cyber-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  padding: 2px;
+  background: linear-gradient(
+    45deg,
+    var(--neon-cyan) 0%,
+    var(--neon-purple) 50%,
+    var(--neon-pink) 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: borderFlow 4s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes borderFlow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+/* Holographic header effect */
+.holographic-header {
+  background: linear-gradient(45deg,
+    rgba(128, 90, 213, 0.8),
+    rgba(99, 102, 241, 0.8),
+    rgba(255, 110, 196, 0.8));
+  position: relative;
+  overflow: hidden;
+}
+.holographic-header::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg,
+    transparent 48%,
+    rgba(255,255,255,0.1) 50%,
+    transparent 52%);
+  animation: hologramScan 3s linear infinite;
+}
+
+@keyframes hologramScan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+/* Neon pulse effect */
+.neon-pulse {
+  animation: neonPulse 2s ease-in-out infinite alternate;
+}
+@keyframes neonPulse {
+  from { filter: drop-shadow(0 0 2px currentColor); }
+  to   { filter: drop-shadow(0 0 10px currentColor); }
+}
+
+/* Example parallax effect on card hover (optional) */
+.parallax-card {
+  transform-style: preserve-3d;
+  transition: transform 0.4s ease;
+}
+.parallax-card:hover {
+  transform: translateZ(20px) rotateX(3deg) rotateY(3deg);
+}
+
+/* Chat container (popup) */
+.chat-container {
+  position: fixed;
+  bottom: 6rem;
+  left: 50%;
+  transform: translate(-50%, 100%);
+  width: 100%;
+  max-width: 48rem;
+  height: 0;
+  max-height: 80vh;
+  background: linear-gradient(145deg, rgba(16,16,32,0.95), rgba(8,8,16,0.98));
+  backdrop-filter: blur(12px);
+  border-radius: 1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+  overflow: hidden;
+  border: 1px solid rgba(0, 255, 255, 0.1);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+  z-index: 50;
+}
+.chat-container.active {
+  transform: translate(-50%, 0);
+  height: 32rem;
+  opacity: 1;
+}
+
+.chat-messages {
+  height: calc(100% - 0px);
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+.message {
+  display: flex;
+  margin-bottom: 1.5rem;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: messageSlideIn 0.3s ease forwards;
+}
+.message.ai {
+  background: rgba(0, 255, 255, 0.05);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+@keyframes messageSlideIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+
+/* message structure */
+.avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  margin-right: 1rem;
+  background: linear-gradient(45deg, #0ff, #8a2be2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.typing-indicator {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  opacity: 0;
+}
+.typing-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  background: #0ff;
+  border-radius: 50%;
+  animation: typingAnimation 1.4s infinite ease-in-out;
+}
+.typing-dot:nth-child(1) { animation-delay: 0s; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typingAnimation {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-0.5rem); }
+}
+
+@keyframes scrollBg {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.scroll-bg {
+  animation: scrollBg 40s linear infinite;
+  width: 200%; /* Make sure the images flow seamlessly */
+  display: flex;
+}
+
+
+/* CRT overlay lines */
+.animate-scanline {
+  animation: scanline 4s linear infinite;
+}
+@keyframes scanline {
+  0% { background-position: 0px 0px; }
+  100% { background-position: 0px 100%; }
+}
+
+ /* Animated Grid Lines (subtle background) */
+.grid-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        to right,
+        rgba(0, 255, 255, 0.1) 0,
+        rgba(0, 255, 255, 0.1) 1px,
+        transparent 1px,
+        transparent 150px /* Reduced spacing */
+    ),
+    repeating-linear-gradient(
+        to bottom,
+        rgba(0, 255, 255, 0.1) 0,
+        rgba(0, 255, 255, 0.1) 1px,
+        transparent 1px,
+        transparent 150px
+    );
+    z-index: -1;
+    opacity: 0.3; /* More subtle */
+    animation: gridFlow 20s linear infinite;
+}
+
+@keyframes gridFlow {
+    0% { background-position: 0 0, 0 0; }
+    100% { background-position: 150px 150px, 150px 150px; }  /* Match grid spacing */
+}
+
+/* The "cyber-border" effect */
+.cyber-border {
+  position: relative;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: linear-gradient(145deg, rgba(16,16,32,0.8), rgba(8,8,16,0.9));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.cyber-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  padding: 2px;
+  background: linear-gradient(
+    45deg,
+    var(--neon-cyan) 0%,
+    var(--neon-purple) 50%,
+    var(--neon-pink) 100%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: borderFlow 4s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes borderFlow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+/* Holographic header effect */
+.holographic-header {
+  background: linear-gradient(45deg,
+    rgba(128, 90, 213, 0.8),
+    rgba(99, 102, 241, 0.8),
+    rgba(255, 110, 196, 0.8));
+  position: relative;
+  overflow: hidden;
+}
+.holographic-header::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg,
+    transparent 48%,
+    rgba(255,255,255,0.1) 50%,
+    transparent 52%);
+  animation: hologramScan 3s linear infinite;
+}
+
+@keyframes hologramScan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+/* Neon pulse effect */
+.neon-pulse {
+  animation: neonPulse 2s ease-in-out infinite alternate;
+}
+@keyframes neonPulse {
+  from { filter: drop-shadow(0 0 2px currentColor); }
+  to   { filter: drop-shadow(0 0 10px currentColor); }
+}
+
+/* Variables */
+:root {
+  --neon-cyan: #0ff;
+  --neon-pink: #f0f;
+  --neon-purple: #8a2be2;
+  --bg-dark: #0a0a1a;
+  --bg-light: #f0f4ff;
+}
+
+body {
+  font-family: 'Space Grotesk', sans-serif;
+  background: radial-gradient(circle at center, #0a0a1a 0%, #000 100%);
+  color: #fff;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Grid background with animated grid lines */
+.grid-bg {
+  background-color: #000;
+  background-image: 
+    linear-gradient(90deg, rgba(0, 255, 255, 0.2) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(0, 255, 255, 0.2) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: gridAnimation 15s linear infinite;
+}
+
+@keyframes gridAnimation {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 50px 50px;
+  }
+}
