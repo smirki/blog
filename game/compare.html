@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Design Higher Lower!</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Load confetti-js library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/confetti-js/0.0.18/confetti-js.min.js"></script>
+  <!-- Load TailwindCSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Animations */
+    @keyframes slide-up {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .animate-slide-up {
+      animation: slide-up 0.3s ease-out;
+    }
+    @keyframes bounce-scale {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    .animate-bounce-scale {
+      animation: bounce-scale 0.5s ease-in-out;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, #FF6B6B, #4ECDC4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    /* Loading indicator for iframes */
+    .iframe-loading::after {
+      content: "Loading...";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #6B7280;
+      font-weight: 500;
+    }
+  </style>
+  <script>
+    // Declare global variables at the very top
+    let currentPair = {};
+    let score = 0;
+    let reportSide = null;
+    
+    // Define hideLoading so iframe onload can call it
+    function hideLoading(side) {
+      const loadingEl = document.querySelector(`#site${side} .iframe-loading`);
+      if (loadingEl) {
+        loadingEl.classList.add('hidden');
+      }
+    }
+    
+    // Initialize confetti once the DOM is loaded
+    let confetti;
+    window.addEventListener("DOMContentLoaded", function() {
+      const confettiSettings = { target: 'confetti-canvas', resize: true };
+      if (typeof ConfettiGenerator !== 'undefined') {
+        confetti = new ConfettiGenerator(confettiSettings);
+      } else {
+        console.error("ConfettiGenerator is not defined");
+      }
+    });
+  </script>
+</head>
+<body class="bg-gradient-to-br from-gray-900 to-gray-800 min-h-screen text-white">
+  <!-- Intro Screen with slide-up animation -->
+  <div id="introScreen" class="fixed inset-0 flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 z-50 p-4 animate-slide-up">
+    <div class="bg-gray-800 rounded-2xl shadow-2xl p-8 max-w-lg w-full border border-gray-700">
+      <h1 class="text-4xl font-bold text-center mb-8 gradient-text">
+        Design Higher Lower! 🎨
+      </h1>
+      <div class="space-y-6">
+        <div class="bg-gray-700 rounded-xl p-6">
+          <p class="text-xl mb-4">Can you guess which design has a higher rating? 🤔</p>
+          <ul class="space-y-3 text-gray-300">
+            <li class="flex items-center"><span class="mr-2">👉</span> Compare two designs side by side</li>
+            <li class="flex items-center"><span class="mr-2">🎯</span> Guess which one is rated higher</li>
+            <li class="flex items-center"><span class="mr-2">⭐</span> Get +1 point for each correct guess!</li>
+            <li class="flex items-center"><span class="mr-2">💔</span> Game over if you guess wrong!</li>
+          </ul>
+        </div>
+        <button onclick="startGame()" class="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white font-bold py-4 px-6 rounded-xl hover:opacity-90 transition-all text-xl">
+          START GAME 🚀
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Game Screen -->
+  <div id="gameScreen" class="hidden min-h-screen">
+    <!-- Score Banner with pulse animation -->
+    <div class="fixed top-0 inset-x-0 bg-gray-800 bg-opacity-90 backdrop-blur-sm z-50 p-4 border-b border-gray-700">
+      <div class="max-w-7xl mx-auto flex justify-between items-center">
+        <h1 class="text-2xl font-bold gradient-text">Design Higher Lower</h1>
+        <div class="flex items-center gap-2 animate-pulse">
+          <span class="text-gray-400">Score:</span>
+          <span id="scoreDisplay" class="text-2xl font-bold text-white">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Tabs -->
+    <div class="lg:hidden flex w-full bg-gray-800 mt-16">
+      <button id="tabA" class="flex-1 py-3 text-center font-medium border-b-2 border-purple-500 bg-gray-700/50" onclick="switchTab('A')">
+        Design A
+      </button>
+      <button id="tabB" class="flex-1 py-3 text-center font-medium border-b-2 border-transparent opacity-75" onclick="switchTab('B')">
+        Design B
+      </button>
+    </div>
+
+    <!-- Sites Container -->
+    <div class="flex h-[calc(100vh-4rem)] lg:h-screen pt-16">
+      <!-- Site A -->
+      <div id="siteA" class="w-full lg:w-1/2 h-full p-4">
+        <div class="relative h-full bg-gray-800 rounded-xl shadow-2xl overflow-hidden border border-gray-700">
+          <div class="absolute top-0 inset-x-0 bg-gray-800 z-10 p-3 flex justify-between items-center border-b border-gray-700">
+            <span class="font-medium text-purple-400">Design A</span>
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-gray-400 hidden loading-text">Loading...</span>
+              <button onclick="openInNewTab('A')" class="bg-purple-500/80 hover:bg-purple-600 text-white text-sm px-3 py-1 rounded-lg transition-colors">
+                Open ↗
+              </button>
+            </div>
+          </div>
+          <div class="h-full pt-12 relative">
+            <div class="iframe-loading absolute inset-0 bg-gray-800/50 flex items-center justify-center"></div>
+            <iframe id="iframeA" class="w-full h-full bg-white" onload="hideLoading('A')"></iframe>
+          </div>
+        </div>
+      </div>
+
+      <!-- Site B -->
+      <div id="siteB" class="w-full lg:w-1/2 h-full p-4">
+        <div class="relative h-full bg-gray-800 rounded-xl shadow-2xl overflow-hidden border border-gray-700">
+          <div class="absolute top-0 inset-x-0 bg-gray-800 z-10 p-3 flex justify-between items-center border-b border-gray-700">
+            <span class="font-medium text-purple-400">Design B</span>
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-gray-400 hidden loading-text">Loading...</span>
+              <button onclick="openInNewTab('B')" class="bg-purple-500/80 hover:bg-purple-600 text-white text-sm px-3 py-1 rounded-lg transition-colors">
+                Open ↗
+              </button>
+            </div>
+          </div>
+          <div class="h-full pt-12 relative">
+            <div class="iframe-loading absolute inset-0 bg-gray-800/50 flex items-center justify-center"></div>
+            <iframe id="iframeB" class="w-full h-full bg-white" onload="hideLoading('B')"></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Info Cards for each design -->
+    <div class="fixed bottom-36 lg:bottom-28 left-0 right-0 flex justify-around z-40 px-4">
+      <div id="infoA" class="bg-gray-800/90 backdrop-blur-sm rounded-xl shadow-2xl p-3 w-40 lg:w-56 text-center">
+        <p class="text-sm lg:text-lg font-bold text-purple-400">Design A</p>
+        <button onclick="openReportModal('A')" class="mt-1 lg:mt-2 bg-gray-700/50 hover:bg-gray-600 text-white px-2 py-1 lg:px-4 lg:py-2 text-sm lg:text-base rounded-lg transition-all">
+          🚨 Report
+        </button>
+      </div>
+      <div id="infoB" class="bg-gray-800/90 backdrop-blur-sm rounded-xl shadow-2xl p-3 w-40 lg:w-56 text-center">
+        <p class="text-sm lg:text-lg font-bold text-purple-400">Design B</p>
+        <button onclick="openReportModal('B')" class="mt-1 lg:mt-2 bg-gray-700/50 hover:bg-gray-600 text-white px-2 py-1 lg:px-4 lg:py-2 text-sm lg:text-base rounded-lg transition-all">
+          🚨 Report
+        </button>
+      </div>
+    </div>
+
+    <!-- Game Controls -->
+    <div class="fixed bottom-0 left-0 right-0 bg-gray-800/95 backdrop-blur-sm border-t border-gray-700 p-4">
+      <div class="max-w-2xl mx-auto flex flex-col gap-3">
+        <div class="text-center mb-1">
+          <h2 class="text-lg lg:text-xl font-bold">Which design has a higher rating?</h2>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="vote('A')" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-4 rounded-xl hover:scale-[1.02] transition-transform text-sm lg:text-base">
+            A is Higher
+          </button>
+          <button onclick="vote('B')" class="bg-gradient-to-r from-pink-500 to-purple-500 text-white font-bold py-3 px-4 rounded-xl hover:scale-[1.02] transition-transform text-sm lg:text-base">
+            B is Higher
+          </button>
+        </div>
+        <div class="flex justify-center gap-2">
+          <button onclick="voteBoth('good')" class="text-xs lg:text-sm px-3 py-1.5 rounded-lg bg-green-500/90 hover:bg-green-600 transition-colors">
+            Both Great 🌟
+          </button>
+          <button onclick="voteBoth('bad')" class="text-xs lg:text-sm px-3 py-1.5 rounded-lg bg-red-500/90 hover:bg-red-600 transition-colors">
+            Both Need Work 🔨
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Overlay with Confetti -->
+  <div id="successOverlay" class="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 hidden z-50">
+    <canvas id="confetti-canvas"></canvas>
+    <div class="bg-gray-800 rounded-2xl p-8 shadow-2xl animate-bounce-scale border border-gray-700">
+      <div class="text-center">
+        <div class="text-6xl mb-4">🎯</div>
+        <h2 class="text-2xl font-bold mb-2">Correct!</h2>
+        <p class="text-purple-400">+5 points</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Failure Overlay -->
+  <div id="failureOverlay" class="fixed inset-0 flex justify-center items-center bg-black bg-opacity-50 hidden z-50">
+    <div class="bg-gray-800 rounded-2xl p-8 shadow-2xl animate-bounce-scale border border-gray-700">
+      <div class="text-center">
+        <div class="text-6xl mb-4">💔</div>
+        <h2 class="text-2xl font-bold mb-2">Game Over!</h2>
+        <p class="text-gray-400">Better luck next time!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Over Modal -->
+  <div id="gameOverModal" class="fixed inset-0 flex items-center justify-center bg-black/75 hidden z-50 p-4">
+    <div class="bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-md border border-purple-500/30 text-center animate-slide-up">
+      <h3 class="text-3xl font-bold mb-3 gradient-text">Game Over!</h3>
+      <div class="text-6xl mb-4">🎮</div>
+      <p id="finalScoreMessage" class="text-2xl font-mono font-bold text-purple-400 mb-4">Score: 0</p>
+      <div class="flex flex-col gap-3">
+        <button onclick="restartGame()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg text-lg font-bold">
+          Play Again 🔄
+        </button>
+        <button onclick="shareScore()" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg text-lg font-bold">
+          Share 📤
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Modal -->
+  <div id="reportModal" class="fixed inset-0 flex items-center justify-center bg-black/75 hidden z-50 p-4">
+    <div class="bg-gray-800 rounded-xl shadow-2xl p-6 w-full max-w-md border border-gray-700">
+      <h3 class="text-xl font-bold mb-4">Report an Issue</h3>
+      <textarea id="reportText" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 mb-4 text-white" placeholder="Describe what's wrong with this design..." rows="4"></textarea>
+      <div class="flex justify-end gap-3">
+        <button class="px-4 py-2 text-gray-400 hover:text-white" onclick="closeReportModal()">Cancel</button>
+        <button class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg" onclick="submitReport()">Submit Report</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Adjust viewport height for mobile devices
+    function adjustViewport() {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+    window.addEventListener('resize', adjustViewport);
+    adjustViewport();
+
+    function startGame() {
+      document.getElementById('introScreen').classList.add('hidden');
+      document.getElementById('gameScreen').classList.remove('hidden');
+      score = 0;
+      updateScoreDisplay();
+      loadPair();
+      if (window.innerWidth < 1024) { switchTab('A'); }
+    }
+
+    function updateScoreDisplay() {
+      document.getElementById('scoreDisplay').textContent = score;
+    }
+
+    function openInNewTab(side) {
+      const iframe = document.getElementById(`iframe${side}`);
+      const blob = new Blob([iframe.srcdoc], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    }
+
+    function loadPair() {
+      showLoading('A');
+      showLoading('B');
+      fetch('/api/pair')
+        .then(response => response.json())
+        .then(data => {
+          console.log("Pair data:", data);
+          if (data.error) {
+            alert(data.error);
+            return;
+          }
+          currentPair = data;
+          document.getElementById('iframeA').srcdoc = data.siteA.html;
+          document.getElementById('iframeB').srcdoc = data.siteB.html;
+        })
+        .catch(err => {
+          alert('Failed to load designs. Please try again.');
+          console.error(err);
+        });
+    }
+
+    function showLoading(side) {
+      const loadingEl = document.querySelector(`#site${side} .iframe-loading`);
+      if (loadingEl) loadingEl.classList.remove('hidden');
+    }
+    // hideLoading already defined in head
+
+    function disableButtons() {
+      document.querySelectorAll('button').forEach(btn => btn.disabled = true);
+    }
+    function enableButtons() {
+      document.querySelectorAll('button').forEach(btn => btn.disabled = false);
+    }
+
+    function vote(choice) {
+      disableButtons();
+      let chosen, other;
+      if (choice === 'A') {
+        chosen = currentPair.siteA;
+        other = currentPair.siteB;
+      } else {
+        chosen = currentPair.siteB;
+        other = currentPair.siteA;
+      }
+      
+      const correct = chosen.elo >= other.elo;
+      
+      if (correct) {
+        score += 5;
+        updateScoreDisplay();
+        showSuccessOverlay();
+        if (confetti) confetti.render();
+        submitVote(chosen.id, other.id);
+        setTimeout(() => {
+          hideSuccessOverlay();
+          if (confetti) confetti.clear();
+          enableButtons();
+          loadPair();
+        }, 1000);
+      } else {
+        showFailureOverlay();
+        submitVote(chosen.id, other.id);
+        setTimeout(() => {
+          hideFailureOverlay();
+          enableButtons();
+          showGameOverModal(score);
+        }, 1000);
+      }
+    }
+
+    function voteBoth(type) {
+      disableButtons();
+      fetch('/api/choose_tie', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idA: currentPair.siteA.id, idB: currentPair.siteB.id, type: type })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) { alert(data.error); return; }
+        loadPair();
+        enableButtons();
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Error submitting vote.');
+        enableButtons();
+      });
+    }
+
+    function submitVote(winner, loser) {
+      fetch('/api/choose', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ winner_id: winner, loser_id: loser })
+      })
+      .then(response => response.json())
+      .then(data => { if (data.error) alert(data.error); })
+      .catch(err => {
+        console.error(err);
+        alert('Error submitting vote.');
+      });
+    }
+
+    function openReportModal(side) {
+      reportSide = side;
+      document.getElementById('reportText').value = "";
+      document.getElementById('reportModal').classList.remove("hidden");
+    }
+
+    function closeReportModal() {
+      document.getElementById('reportModal').classList.add("hidden");
+    }
+
+    function submitReport() {
+      const text = document.getElementById('reportText').value;
+      if (!text.trim()) {
+        alert("Please describe the issue before submitting.");
+        return;
+      }
+      let siteId = reportSide === 'A' ? currentPair.siteA.id : currentPair.siteB.id;
+      fetch('/api/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: siteId, report_text: text })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) { alert(data.error); return; }
+        alert("Thanks for letting us know!");
+        closeReportModal();
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Error submitting report.');
+      });
+    }
+
+    function switchTab(tab) {
+      document.getElementById('tabA').classList.toggle('border-purple-500', tab === 'A');
+      document.getElementById('tabA').classList.toggle('opacity-50', tab !== 'A');
+      document.getElementById('tabB').classList.toggle('border-purple-500', tab === 'B');
+      document.getElementById('tabB').classList.toggle('opacity-50', tab !== 'B');
+      document.getElementById('siteA').classList.toggle('hidden', tab !== 'A');
+      document.getElementById('siteB').classList.toggle('hidden', tab !== 'B');
+    }
+
+    function showSuccessOverlay() {
+      document.getElementById('successOverlay').classList.remove('hidden');
+    }
+    function hideSuccessOverlay() {
+      document.getElementById('successOverlay').classList.add('hidden');
+    }
+    function showFailureOverlay() {
+      document.getElementById('failureOverlay').classList.remove('hidden');
+    }
+    function hideFailureOverlay() {
+      document.getElementById('failureOverlay').classList.add('hidden');
+    }
+
+    function showGameOverModal(finalScore) {
+      document.getElementById('finalScoreMessage').textContent = `Score: ${finalScore}`;
+      document.getElementById('gameOverModal').classList.remove('hidden');
+    }
+    function hideGameOverModal() {
+      document.getElementById('gameOverModal').classList.add('hidden');
+    }
+    function restartGame() {
+      hideGameOverModal();
+      score = 0;
+      updateScoreDisplay();
+      document.getElementById('gameScreen').classList.add('hidden');
+      document.getElementById('introScreen').classList.remove('hidden');
+    }
+    function shareScore() {
+      const shareData = {
+        title: 'Design Higher Lower!',
+        text: `I scored ${score} in Design Higher Lower! Can you beat me?`,
+        url: window.location.href,
+      };
+      if (navigator.share) {
+        navigator.share(shareData).catch(console.error);
+      } else {
+        navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+        alert("Score copied to clipboard! Share it with your friends.");
+      }
+    }
+  </script>
+</body>
+</html>

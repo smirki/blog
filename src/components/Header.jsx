@@ -86,10 +86,6 @@ export default function Header({ onThemeToggle, isDark }) {
                   checked={isDark}
                   onChange={onThemeToggle}
                 />
-                <div className="w-16 h-8 bg-gray-300 dark:bg-gray-700 rounded-full transition-colors duration-300"></div>
-                <span className="absolute left-1 top-1 w-6 h-6 bg-white dark:bg-black rounded-full transition-transform duration-300 flex items-center justify-center peer-checked:translate-x-8">
-                  {isDark ? '🌕' : '🌓'}
-                </span>
               </label>
             </div>
             {/* Mobile Hamburger Button */}
@@ -155,10 +151,6 @@ export default function Header({ onThemeToggle, isDark }) {
                 checked={isDark}
                 onChange={onThemeToggle}
               />
-              <div className="w-16 h-8 bg-gray-300 dark:bg-gray-700 rounded-full transition-colors duration-300"></div>
-              <span className="absolute left-1 top-1 w-6 h-6 bg-white dark:bg-black rounded-full transition-transform duration-300 flex items-center justify-center peer-checked:translate-x-8">
-                {isDark ? '🌕' : '🌓'}
-              </span>
             </label>
           </div>
         </div>

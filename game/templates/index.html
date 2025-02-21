@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat Answer Ratings</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f2f2f2;
+        }
+        h1 {
+            text-align: center;
+        }
+        .chat {
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+        }
+        .chat h2 {
+            margin-top: 0;
+        }
+        .rating {
+            margin-top: 10px;
+        }
+        iframe {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+        }
+        label {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chat Answer Ratings</h1>
+    {% for chat in chats %}
+    <div class="chat">
+        <h2>Question: {{ chat['question'] }}</h2>
+        <p><strong>Reasoning:</strong> {{ chat['reasoning'] }}</p>
+        <h3>Answer Preview:</h3>
+        <!-- Render the HTML answer in an iframe using the srcdoc attribute -->
+        <iframe srcdoc="{{ chat['answer'] | extract_html | safe }}"></iframe>
+        <div class="rating">
+            <form method="post" action="{{ url_for('rate', chat_id=chat['id']) }}">
+                <label for="rating-{{ chat['id'] }}">Rate this answer:</label>
+                <select name="rating" id="rating-{{ chat['id'] }}">
+                    {% for i in range(1, 6) %}
+                    <option value="{{ i }}" {% if chat['rating'] == i %}selected{% endif %}>{{ i }}</option>
+                    {% endfor %}
+                </select>
+                <input type="submit" value="Submit">
+            </form>
+            {% if chat['rating'] %}
+                <p>Current rating: {{ chat['rating'] }}</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</body>
+</html>
